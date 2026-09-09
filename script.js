@@ -1,5 +1,12 @@
 const canvas = document.getElementById("field");
 const ctx = canvas.getContext("2d");
+const simulationStatus = document.getElementById("simulation-status");
+
+window.addEventListener("error", (event) => {
+  if (simulationStatus) {
+    simulationStatus.textContent = "エラー: " + event.message;
+  }
+});
 
 // 操作盤はこの倍率を変更する。1が現在の能力（捕食者の基本速度は1.5倍）。
 const settings = {
@@ -369,6 +376,10 @@ function loop(timestamp) {
   requestAnimationFrame(loop);
 }
 
+draw();
+if (simulationStatus) {
+  simulationStatus.textContent = "実行中";
+}
 requestAnimationFrame(loop);
 
 // 操作盤から設定だけを更新し、個体固有の基準速度は変更しない。
