@@ -65,11 +65,15 @@ input[type="range"] { margin: 0 0 3px; height: 26px; }
   .graph-panel { margin-top: 12px; }
   .plot-stage { height: 200px; flex: none; }
 }
+.page-header { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.page-header h1 { margin: 0; }
+.page-header span { font-size: .875rem; }
+#restart-simulation { min-height: 32px; padding: 4px 12px; font-size: .875rem; }
 </style>
 </head>
 <body>
 <main>
-<h1>ロトカロトロト</h1>
+<header class="page-header"><h1>ロトカロトロト</h1><button type="button" id="restart-simulation">リスタート</button><span>現在の設定を保って最初から</span></header>
 <div class="workspace">
 <section class="field-panel" aria-label="箱庭">
 <p id="simulation-status" class="simulation-status" role="status">シミュレーションを読み込み中…</p>
@@ -79,24 +83,24 @@ input[type="range"] { margin: 0 0 3px; height: 26px; }
 <aside class="controls" aria-labelledby="controls-title">
 <h2 id="controls-title">操作盤</h2>
 <div class="species-controls"><fieldset><legend>草食動物</legend>
-<label for="herbivore-speedMultiplier">移動速度<output id="herbivore-speedMultiplier-value" for="herbivore-speedMultiplier">1.0倍</output></label>
-<input id="herbivore-speedMultiplier" data-species="herbivore" data-setting="speedMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="herbivore-speedMultiplier-value">
-<label for="herbivore-reproductionMultiplier">繁殖倍率<output id="herbivore-reproductionMultiplier-value" for="herbivore-reproductionMultiplier">1.0倍</output></label>
-<input id="herbivore-reproductionMultiplier" data-species="herbivore" data-setting="reproductionMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="herbivore-reproductionMultiplier-value">
-<label for="herbivore-energyUseMultiplier">体力消費<output id="herbivore-energyUseMultiplier-value" for="herbivore-energyUseMultiplier">1.0倍</output></label>
-<input id="herbivore-energyUseMultiplier" data-species="herbivore" data-setting="energyUseMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="herbivore-energyUseMultiplier-value">
-<label for="herbivore-detectionDistance">探索距離<output id="herbivore-detectionDistance-value" for="herbivore-detectionDistance">120px</output></label>
-<input id="herbivore-detectionDistance" data-species="herbivore" data-setting="detectionDistance" type="range" min="0" max="400" step="10" value="120" aria-describedby="herbivore-detectionDistance-value">
+<label for="herbivore-speedMultiplier">移動速度<output id="herbivore-speedMultiplier-value" for="herbivore-speedMultiplier">1.00倍</output></label>
+<input id="herbivore-speedMultiplier" data-species="herbivore" data-setting="speedMultiplier" type="range" min="0" max="3" step="0.05" value="1" aria-describedby="herbivore-speedMultiplier-value">
+<label for="herbivore-reproductionMultiplier">繁殖倍率<output id="herbivore-reproductionMultiplier-value" for="herbivore-reproductionMultiplier">0.10倍</output></label>
+<input id="herbivore-reproductionMultiplier" data-species="herbivore" data-setting="reproductionMultiplier" type="range" min="0" max="3" step="0.05" value="0.1" aria-describedby="herbivore-reproductionMultiplier-value">
+<label for="herbivore-energyUseMultiplier">体力消費<output id="herbivore-energyUseMultiplier-value" for="herbivore-energyUseMultiplier">0.25倍</output></label>
+<input id="herbivore-energyUseMultiplier" data-species="herbivore" data-setting="energyUseMultiplier" type="range" min="0" max="3" step="0.05" value="0.25" aria-describedby="herbivore-energyUseMultiplier-value">
+<label for="herbivore-detectionDistance">探索距離<output id="herbivore-detectionDistance-value" for="herbivore-detectionDistance">200px</output></label>
+<input id="herbivore-detectionDistance" data-species="herbivore" data-setting="detectionDistance" type="range" min="0" max="400" step="10" value="200" aria-describedby="herbivore-detectionDistance-value">
 </fieldset>
 <fieldset><legend>捕食者</legend>
-<label for="predator-speedMultiplier">移動速度<output id="predator-speedMultiplier-value" for="predator-speedMultiplier">1.0倍</output></label>
-<input id="predator-speedMultiplier" data-species="predator" data-setting="speedMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="predator-speedMultiplier-value">
-<label for="predator-reproductionMultiplier">繁殖倍率<output id="predator-reproductionMultiplier-value" for="predator-reproductionMultiplier">1.0倍</output></label>
-<input id="predator-reproductionMultiplier" data-species="predator" data-setting="reproductionMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="predator-reproductionMultiplier-value">
-<label for="predator-energyUseMultiplier">体力消費<output id="predator-energyUseMultiplier-value" for="predator-energyUseMultiplier">1.0倍</output></label>
-<input id="predator-energyUseMultiplier" data-species="predator" data-setting="energyUseMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="predator-energyUseMultiplier-value">
-<label for="predator-detectionDistance">探索距離<output id="predator-detectionDistance-value" for="predator-detectionDistance">120px</output></label>
-<input id="predator-detectionDistance" data-species="predator" data-setting="detectionDistance" type="range" min="0" max="400" step="10" value="120" aria-describedby="predator-detectionDistance-value">
+<label for="predator-speedMultiplier">移動速度<output id="predator-speedMultiplier-value" for="predator-speedMultiplier">1.00倍</output></label>
+<input id="predator-speedMultiplier" data-species="predator" data-setting="speedMultiplier" type="range" min="0" max="3" step="0.05" value="1" aria-describedby="predator-speedMultiplier-value">
+<label for="predator-reproductionMultiplier">繁殖倍率<output id="predator-reproductionMultiplier-value" for="predator-reproductionMultiplier">0.05倍</output></label>
+<input id="predator-reproductionMultiplier" data-species="predator" data-setting="reproductionMultiplier" type="range" min="0" max="3" step="0.05" value="0.05" aria-describedby="predator-reproductionMultiplier-value">
+<label for="predator-energyUseMultiplier">体力消費<output id="predator-energyUseMultiplier-value" for="predator-energyUseMultiplier">0.20倍</output></label>
+<input id="predator-energyUseMultiplier" data-species="predator" data-setting="energyUseMultiplier" type="range" min="0" max="3" step="0.05" value="0.2" aria-describedby="predator-energyUseMultiplier-value">
+<label for="predator-detectionDistance">探索距離<output id="predator-detectionDistance-value" for="predator-detectionDistance">80px</output></label>
+<input id="predator-detectionDistance" data-species="predator" data-setting="detectionDistance" type="range" min="0" max="400" step="10" value="80" aria-describedby="predator-detectionDistance-value">
 </fieldset>
 
 </div><button type="button" id="reset-settings">倍率・探索距離を初期値に戻す</button>
