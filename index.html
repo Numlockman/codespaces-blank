@@ -72,6 +72,8 @@ input[type="range"] { margin: 0 0 3px; height: 26px; }
 .speed-controls { display: flex; align-items: center; gap: 5px; }
 .speed-controls button { min-height: 32px; padding: 4px 10px; font-size: .875rem; }
 .speed-controls button[aria-pressed="true"] { background: #193f72; color: white; border-color: #d5e7ff; }
+.reset-actions { display:flex; flex-wrap:wrap; gap:6px; }
+#reset-all { min-height:32px; padding:5px 12px; font-size:.875rem; background:#193f72; color:white; }
 </style>
 </head>
 <body>
@@ -106,7 +108,7 @@ input[type="range"] { margin: 0 0 3px; height: 26px; }
 <input id="predator-detectionDistance" data-species="predator" data-setting="detectionDistance" type="range" min="0" max="400" step="10" value="80" aria-describedby="predator-detectionDistance-value">
 </fieldset>
 
-</div><button type="button" id="reset-settings">倍率・探索距離を初期値に戻す</button>
+</div><div class="reset-actions"><button type="button" id="reset-settings">能力設定を戻す</button><button type="button" id="reset-all">全リセット</button></div>
 <p class="note">倍率は即時反映。捕食者の基準速度は草食動物の1.5倍。</p>
 <p id="settings-status" class="note" role="status"></p>
 </aside>
@@ -128,6 +130,6 @@ input[type="range"] { margin: 0 0 3px; height: 26px; }
 <div class="plot-stage"><canvas id="population-graph" role="img" aria-label="箱庭とロトカ・ヴォルテラ方程式の個体数推移"></canvas></div>
 </section>
 </main>
-<script src="script.js"></script>
+<script src="script.js?v=full-reset-1"></script>
 </body>
 </html>
