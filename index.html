@@ -6,74 +6,58 @@
 <title>ロトカロトロト</title>
 <style>
 * { box-sizing: border-box; }
-body { margin: 0; background: #780d28; color: #fff; font-family: system-ui, sans-serif; font-size: 16px; line-height: 1.5; }
-main { max-width: 1280px; margin: auto; padding: 20px; }
-h1 { font-size: 1.4rem; margin: 0 0 16px; }
-h2 { font-size: 1.1rem; margin: 0 0 12px; }
-.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
-.field-panel { min-width: 0; }
-.simulation-status { margin: 0 0 8px; font-weight: 700; }
-#field { display: block; width: 100%; height: auto; background: #3afa2c; }
-.legend { margin: 8px 0 0; font-size: .875rem; }
-.controls { background: #edf5ff; color: #172b43; padding: 18px; border-radius: 8px; min-width: 0; }
-fieldset { border: 0; padding: 0; margin: 0 0 18px; min-width: 0; }
-legend { font-weight: 700; padding: 0; margin-bottom: 8px; }
-label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: .875rem; }
+html, body { margin: 0; width: 100%; min-height: 100%; }
+body { background: #780d28; color: #fff; font-family: system-ui, sans-serif; font-size: clamp(12px, 1.05vw, 16px); line-height: 1.35; }
+/* ヘッダーを除く高さを2:1、上段の横幅を2:1で配分する。 */
+main {
+  width: 100%; height: 100vh; height: 100dvh;
+  padding: clamp(6px, 1vw, 16px);
+  display: grid; grid-template-rows: auto minmax(0, 2fr) minmax(0, 1fr);
+  gap: clamp(6px, 1vw, 14px);
+}
+h1, h2, p { margin: 0; }
+h1 { font-size: 1.15em; }
+h2 { font-size: 1.1em; }
+.page-header, .speed-controls, .reset-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .4em .7em; }
+.page-header span { font-size: .9em; }
+.workspace { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: clamp(6px, 1vw, 14px); }
+.workspace, .field-panel, .controls, .graph-panel { min-width: 0; min-height: 0; }
+.field-panel { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: .25em; }
+.simulation-status { font-weight: bold; overflow-wrap: anywhere; }
+.field-stage { position: relative; min-width: 0; min-height: 0; }
+/* Canvasの固有サイズをレイアウト計算から切り離し、余白内に収める。 */
+#field { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.legend, .note { font-size: .9em; }
+.controls { padding: clamp(6px, .8vw, 12px); border-radius: 8px; background: #edf5ff; color: #172b43; overflow: auto; }
+.species-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8em; margin-top: .35em; }
+fieldset { border: 0; padding: 0; margin: 0 0 .4em; min-width: 0; }
+legend { font-weight: bold; padding: 0; margin-bottom: .3em; }
+label { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .15em .4em; font-size: .9em; }
 output { font-variant-numeric: tabular-nums; }
-input[type="range"] { display: block; width: 100%; height: 28px; margin: 0 0 6px; accent-color: #245ba5; cursor: pointer; }
-button { font: inherit; padding: 9px 14px; min-height: 44px; border: 1px solid #547293; border-radius: 5px; color: #172b43; background: white; cursor: pointer; }
-input:focus-visible, button:focus-visible { outline: 3px solid #245ba5; outline-offset: 3px; }
-.note { font-size: .875rem; margin: 10px 0 0; }
-.graph-panel { margin-top: 20px; padding: 18px; background: #fff0f4; color: #502034; border-radius: 8px; min-height: 180px; }
-.graph-panel p { margin: 0; }
-@media (max-width: 760px) { main { padding: 12px; } .workspace { grid-template-columns: minmax(0, 1fr); } input[type="range"] { height: 44px; } }
-
-/* PCは画面高に合わせる。箱庭の内部座標800×600は維持。 */
-main { max-width: none; padding: 10px 16px; }
-h1 { margin-bottom: 6px; font-size: 1.125rem; }
-h2 { margin-bottom: 4px; font-size: 1rem; }
-.workspace { grid-template-columns: minmax(0, 1fr) 390px; gap: 12px; align-items: stretch; min-height: 0; }
-.field-panel { display: flex; flex-direction: column; min-height: 0; }
-.field-stage { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center; }
-#field { width: auto; max-width: 100%; height: auto; max-height: 100%; object-fit: contain; }
-.simulation-status, .legend { margin: 0; font-size: .875rem; }
-.controls { padding: 10px; }
-.species-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-fieldset { margin-bottom: 6px; }
-legend { margin-bottom: 4px; }
-input[type="range"] { margin: 0 0 3px; height: 26px; }
-.note { margin-top: 4px; font-size: .875rem; }
+input[type="range"] { display: block; width: 100%; height: clamp(18px, 3vh, 28px); margin: 0 0 .2em; accent-color: #245ba5; cursor: pointer; }
+button { font: inherit; padding: .3em .65em; min-height: 28px; border: 1px solid #547293; border-radius: 5px; color: #172b43; background: #fff; cursor: pointer; }
+input:focus-visible, button:focus-visible { outline: 3px solid #245ba5; outline-offset: 2px; }
+.speed-controls button[aria-pressed="true"], #reset-all { background: #193f72; color: white; }
+.note { margin-top: .35em; }
 #settings-status:empty { display: none; }
-#reset-settings { padding: 5px 9px; min-height: 32px; font-size: .875rem; }
-.graph-panel { min-height: 0; margin-top: 0; padding: 8px 12px; display: flex; flex-direction: column; }
-.graph-toolbar, .equation-controls { display: flex; gap: 6px 14px; align-items: center; flex-wrap: wrap; font-size: .875rem; }
+.graph-panel { padding: clamp(5px, .65vw, 10px); background: #fff0f4; color: #502034; border-radius: 8px; display: flex; flex-direction: column; gap: .15em; overflow: auto; }
+.graph-toolbar, .equation-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .2em .8em; font-size: .85em; }
 #graph-time { margin-left: auto; font-variant-numeric: tabular-nums; }
-.equation-controls label { align-items: center; gap: 4px; }
-.equation-controls input { width: 72px; font: inherit; padding: 3px; }
-.equation-controls button { font-size: .875rem; min-height: 30px; padding: 3px 8px; }
-.graph-note { font-size: .875rem; }
-.plot-stage { position: relative; min-height: 120px; flex: 1; }
-#population-graph { display: block; width: 100%; height: 100%; }
-@media (min-width: 1000px) and (min-height: 650px) {
-  main { height: 100vh; height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr) 260px; gap: 8px; }
-  h1 { margin: 0; }
-}
-@media (max-width: 999px), (max-height: 649px) {
+.equation-controls label { gap: .3em; font-size: inherit; }
+.equation-controls input { width: 5em; min-width: 0; font: inherit; padding: .1em; }
+.equation-controls button { min-height: 24px; padding: .1em .5em; }
+.graph-note { font-size: .8em; }
+.plot-stage { position: relative; flex: 1 0 80px; min-width: 0; min-height: 80px; }
+#population-graph { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+/* スマートフォン縦画面は、文字と操作を保つため縦積みにする。 */
+@media (max-width: 600px) {
+  main { height: auto; min-height: 100vh; grid-template-rows: auto auto auto; }
   .workspace { grid-template-columns: minmax(0, 1fr); }
-  .field-stage { flex: none; }
-  #field { width: min(100%, 640px); }
-  .graph-panel { margin-top: 12px; }
-  .plot-stage { height: 200px; flex: none; }
+  .field-stage { height: 55vw; }
+  .controls { overflow: visible; }
+  .graph-panel { min-height: 280px; overflow: visible; }
+  input[type="range"] { height: 28px; }
 }
-.page-header { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
-.page-header h1 { margin: 0; }
-.page-header span { font-size: .875rem; }
-#restart-simulation { min-height: 32px; padding: 4px 12px; font-size: .875rem; }
-.speed-controls { display: flex; align-items: center; gap: 5px; }
-.speed-controls button { min-height: 32px; padding: 4px 10px; font-size: .875rem; }
-.speed-controls button[aria-pressed="true"] { background: #193f72; color: white; border-color: #d5e7ff; }
-.reset-actions { display:flex; flex-wrap:wrap; gap:6px; }
-#reset-all { min-height:32px; padding:5px 12px; font-size:.875rem; background:#193f72; color:white; }
 </style>
 </head>
 <body>
