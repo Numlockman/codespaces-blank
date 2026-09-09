@@ -121,10 +121,22 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // 草を先に描き、その上に動物を描く。
-  ctx.fillStyle = "#65c74a";
+  // 明るい緑のフィールドでも見えるよう、濃い緑の3本の葉で表す。
+  ctx.strokeStyle = "#075d24";
+  ctx.fillStyle = "#075d24";
+  ctx.lineWidth = 2;
   for (const grass of grasses) {
     ctx.beginPath();
-    ctx.arc(grass.x, grass.y, 4, 0, Math.PI * 2);
+    ctx.moveTo(grass.x, grass.y + 4);
+    ctx.lineTo(grass.x - 4, grass.y - 4);
+    ctx.moveTo(grass.x, grass.y + 4);
+    ctx.lineTo(grass.x, grass.y - 6);
+    ctx.moveTo(grass.x, grass.y + 4);
+    ctx.lineTo(grass.x + 4, grass.y - 4);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(grass.x, grass.y + 4, 2, 0, Math.PI * 2);
     ctx.fill();
   }
 
