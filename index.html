@@ -27,6 +27,44 @@ input:focus-visible, button:focus-visible { outline: 3px solid #245ba5; outline-
 .graph-panel { margin-top: 20px; padding: 18px; background: #fff0f4; color: #502034; border-radius: 8px; min-height: 180px; }
 .graph-panel p { margin: 0; }
 @media (max-width: 760px) { main { padding: 12px; } .workspace { grid-template-columns: minmax(0, 1fr); } input[type="range"] { height: 44px; } }
+
+/* PCは画面高に合わせる。箱庭の内部座標800×600は維持。 */
+main { max-width: none; padding: 10px 16px; }
+h1 { margin-bottom: 6px; font-size: 1.125rem; }
+h2 { margin-bottom: 4px; font-size: 1rem; }
+.workspace { grid-template-columns: minmax(0, 1fr) 390px; gap: 12px; align-items: stretch; min-height: 0; }
+.field-panel { display: flex; flex-direction: column; min-height: 0; }
+.field-stage { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center; }
+#field { width: auto; max-width: 100%; height: auto; max-height: 100%; object-fit: contain; }
+.simulation-status, .legend { margin: 0; font-size: .875rem; }
+.controls { padding: 10px; }
+.species-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+fieldset { margin-bottom: 6px; }
+legend { margin-bottom: 4px; }
+input[type="range"] { margin: 0 0 3px; height: 26px; }
+.note { margin-top: 4px; font-size: .875rem; }
+#settings-status:empty { display: none; }
+#reset-settings { padding: 5px 9px; min-height: 32px; font-size: .875rem; }
+.graph-panel { min-height: 0; margin-top: 0; padding: 8px 12px; display: flex; flex-direction: column; }
+.graph-toolbar, .equation-controls { display: flex; gap: 6px 14px; align-items: center; flex-wrap: wrap; font-size: .875rem; }
+#graph-time { margin-left: auto; font-variant-numeric: tabular-nums; }
+.equation-controls label { align-items: center; gap: 4px; }
+.equation-controls input { width: 72px; font: inherit; padding: 3px; }
+.equation-controls button { font-size: .875rem; min-height: 30px; padding: 3px 8px; }
+.graph-note { font-size: .875rem; }
+.plot-stage { position: relative; min-height: 120px; flex: 1; }
+#population-graph { display: block; width: 100%; height: 100%; }
+@media (min-width: 1000px) and (min-height: 650px) {
+  main { height: 100vh; height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr) 260px; gap: 8px; }
+  h1 { margin: 0; }
+}
+@media (max-width: 999px), (max-height: 649px) {
+  .workspace { grid-template-columns: minmax(0, 1fr); }
+  .field-stage { flex: none; }
+  #field { width: min(100%, 640px); }
+  .graph-panel { margin-top: 12px; }
+  .plot-stage { height: 200px; flex: none; }
+}
 </style>
 </head>
 <body>
@@ -35,12 +73,12 @@ input:focus-visible, button:focus-visible { outline: 3px solid #245ba5; outline-
 <div class="workspace">
 <section class="field-panel" aria-label="箱庭">
 <p id="simulation-status" class="simulation-status" role="status">シミュレーションを読み込み中…</p>
-<canvas id="field" width="800" height="600" role="img" aria-label="草食動物と捕食者のシミュレーション">草食動物と捕食者のシミュレーション</canvas>
+<div class="field-stage"><canvas id="field" width="800" height="600" role="img" aria-label="草食動物と捕食者のシミュレーション">草食動物と捕食者のシミュレーション</canvas></div>
 <p class="legend">白い丸：草食動物 ／ 赤い丸：捕食者 ／ 緑の葉：草</p>
 </section>
 <aside class="controls" aria-labelledby="controls-title">
 <h2 id="controls-title">操作盤</h2>
-<fieldset><legend>草食動物</legend>
+<div class="species-controls"><fieldset><legend>草食動物</legend>
 <label for="herbivore-speedMultiplier">移動速度<output id="herbivore-speedMultiplier-value" for="herbivore-speedMultiplier">1.0倍</output></label>
 <input id="herbivore-speedMultiplier" data-species="herbivore" data-setting="speedMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="herbivore-speedMultiplier-value">
 <label for="herbivore-reproductionMultiplier">繁殖倍率<output id="herbivore-reproductionMultiplier-value" for="herbivore-reproductionMultiplier">1.0倍</output></label>
@@ -59,14 +97,26 @@ input:focus-visible, button:focus-visible { outline: 3px solid #245ba5; outline-
 <input id="predator-detectionDistance" data-species="predator" data-setting="detectionDistance" type="range" min="0" max="400" step="10" value="120" aria-describedby="predator-detectionDistance-value">
 </fieldset>
 
-<button type="button" id="reset-settings">倍率・探索距離を初期値に戻す</button>
-<p class="note">変更は現在の個体にも即時反映されます。1倍は各種の基準値です。捕食者の基本速度は草食動物の1.5倍です。</p>
+</div><button type="button" id="reset-settings">倍率・探索距離を初期値に戻す</button>
+<p class="note">倍率は即時反映。捕食者の基準速度は草食動物の1.5倍。</p>
 <p id="settings-status" class="note" role="status"></p>
 </aside>
 </div>
 <section class="graph-panel" aria-labelledby="graph-title">
 <h2 id="graph-title">個体数グラフ</h2>
-<p>次の段階で、箱庭の個体数と方程式の比較グラフをここに表示します。</p>
+<div class="graph-toolbar">
+<span>青：草食動物 ／ 赤：捕食者　実線：箱庭 ／ 破線：方程式</span>
+<span id="graph-time">0秒</span></div>
+<div class="equation-controls">
+<label>α <input id="lv-alpha" type="number" min="0" max="1" step="0.01" value="0.06" aria-label="被食者の増殖率 alpha"></label>
+<label>β <input id="lv-beta" type="number" min="0" max="1" step="0.001" value="0.02" aria-label="捕食係数 beta"></label>
+<label>δ <input id="lv-delta" type="number" min="0" max="1" step="0.001" value="0.01" aria-label="捕食者の増殖係数 delta"></label>
+<label>γ <input id="lv-gamma" type="number" min="0" max="1" step="0.01" value="0.12" aria-label="捕食者の死亡率 gamma"></label>
+<button id="restart-comparison" type="button">現在数から比較し直す</button>
+</div>
+<p class="graph-note">dx/dt = αx − βxy ／ dy/dt = δxy − γy（x：草食動物、y：捕食者）</p>
+<p class="graph-note" id="graph-status" role="status">係数は比較用の仮設定です。箱庭の倍率とは独立で、草・空腹・追跡は式に含みません。</p>
+<div class="plot-stage"><canvas id="population-graph" role="img" aria-label="箱庭とロトカ・ヴォルテラ方程式の個体数推移"></canvas></div>
 </section>
 </main>
 <script src="script.js"></script>
