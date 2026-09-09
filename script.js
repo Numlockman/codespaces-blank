@@ -385,6 +385,7 @@ function draw() {
 
 let lastTimestamp = null;
 let accumulatedTime = 0;
+let simulationSpeed = 1;
 
 // 非表示の間は進めず、戻った際にまとめて計算しない。
 document.addEventListener("visibilitychange", () => {
@@ -401,7 +402,7 @@ function loop(timestamp) {
       accumulatedTime += Math.min(
         MAX_FRAME_SECONDS,
         Math.max(0, (timestamp - lastTimestamp) / 1000)
-      );
+      ) * simulationSpeed;
     }
     lastTimestamp = timestamp;
     while (accumulatedTime + 1e-9 >= FIXED_DT) {
@@ -586,3 +587,19 @@ function restartSimulation() {
 }
 const restartButton = document.getElementById("restart-simulation");
 if (restartButton) restartButton.addEventListener("click", restartSimulation);
+
+const speedButtons = document.querySelectorAll("button[data-simulation-speed]");
+for (const button of speedButtons) {
+  button.addEventListener("click", () => {
+    const speed = Number(button.dataset.simulationSpeed);
+    if (![1, 3, 5].includes(speed)) return;
+    simulationSpeed = speed;
+    // 変更前の端数を新しい倍率に持ち越さない。
+    lastTimestamp = null;
+    accumulatedTime = 0;
+    for (const candidate of speedButtons) {
+      candidate.setAttribute("aria-pressed",
+        String(Number(candidate.dataset.simulationSpeed) === simulationSpeed));
+    }
+  });
+}
