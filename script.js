@@ -1,6 +1,27 @@
 const canvas = document.getElementById("field");
 const ctx = canvas.getContext("2d");
 
+// 操作盤はこの倍率を変更する。1が現在の能力（捕食者の基本速度は1.5倍）。
+const settings = {
+  herbivore: { speedMultiplier: 1, reproductionMultiplier: 1, energyUseMultiplier: 1 },
+  predator: { speedMultiplier: 1, reproductionMultiplier: 1, energyUseMultiplier: 1, detectionDistance: 120 }
+};
+
+// 旧コードの60更新/秒を基準に、時間を秒・速度をpx/秒へ換算。
+const BASE_UPDATES_PER_SECOND = 60;
+const FIXED_DT = 1 / BASE_UPDATES_PER_SECOND;
+const MAX_FRAME_SECONDS = 0.1; // 長い停止後の追いつき計算を制限する
+const HEALTH_LOSS_PER_SECOND = 6;
+const REPRODUCTION_RATE = -Math.log1p(-0.001) * BASE_UPDATES_PER_SECOND;
+const REPRODUCTION_COOLDOWN_SECONDS = 10;
+const REPRODUCTION_HEALTH_THRESHOLD = 70;
+const REPRODUCTION_COST = 30;
+let simulationTime = 0;
+
+function eventProbability(rate, dt) {
+  return -Math.expm1(-rate * dt);
+}
+
 const animals = [];
 const predators = [];
 const grasses = [];
@@ -8,7 +29,7 @@ const grasses = [];
 // 草・食事の設定（距離の単位は canvas 上のピクセル）
 const INITIAL_GRASS_COUNT = 40;
 const MAX_GRASS_COUNT = 200;
-const GRASS_SPAWN_CHANCE = 0.08; // 1フレームごとの発生確率
+const GRASS_SPAWN_RATE = -Math.log1p(-0.08) * BASE_UPDATES_PER_SECOND;
 const GRASS_SPREAD = 30; // 親の草からX・Y方向へ広がる最大距離
 const EAT_HEALTH_THRESHOLD = 70;
 const EAT_DISTANCE = 12;
@@ -17,7 +38,6 @@ const GRASS_HEALTH_RECOVERY = 30;
 // 捕食者は草食動物を食べ、空腹時に近くの獲物を追う。
 const INITIAL_PREDATOR_COUNT = 2;
 const PREDATOR_SPEED_MULTIPLIER = 1.5;
-const PREDATOR_DETECTION_DISTANCE = 120; // 獲物を発見する半径（px）
 
 function spawnGrass(randomPosition = false) {
   if (grasses.length >= MAX_GRASS_COUNT) return;
@@ -75,7 +95,7 @@ function findNearbyPrey(predator) {
   if (predator.health <= 0 || predator.health > EAT_HEALTH_THRESHOLD) return null;
 
   let target = null;
-  let nearestDistanceSquared = PREDATOR_DETECTION_DISTANCE ** 2;
+  let nearestDistanceSquared = settings.predator.detectionDistance ** 2;
   for (const animal of animals) {
     if (animal.health <= 0) continue;
     const dx = animal.x - predator.x;
@@ -114,7 +134,7 @@ for (let i = 0; i < 10; i++) {
   animals.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
-    speed: 1 + Math.random(),
+    speed: (1 + Math.random()) * BASE_UPDATES_PER_SECOND,
     angle: Math.random() * Math.PI * 2,
     health: 100,
     maxHealth: 100,
@@ -126,7 +146,7 @@ for (let i = 0; i < INITIAL_PREDATOR_COUNT; i++) {
   predators.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
-    speed: (1 + Math.random()) * PREDATOR_SPEED_MULTIPLIER,
+    speed: (1 + Math.random()) * PREDATOR_SPEED_MULTIPLIER * BASE_UPDATES_PER_SECOND,
     angle: Math.random() * Math.PI * 2,
     health: 100,
     maxHealth: 100,
@@ -134,16 +154,19 @@ for (let i = 0; i < INITIAL_PREDATOR_COUNT; i++) {
   });
 }
 
-function update() {
-  if (Math.random() < GRASS_SPAWN_CHANCE) {
+// dtは固定の1/60秒。ランダムな方向変更もこの間隔で行う。
+function update(dt = FIXED_DT) {
+  simulationTime += dt;
+  if (Math.random() < eventProbability(GRASS_SPAWN_RATE, dt)) {
     spawnGrass();
   }
 
   for (const animal of animals) {
     animal.angle += (Math.random() - 0.5) * 0.3;
 
-    animal.x += Math.cos(animal.angle) * animal.speed;
-    animal.y += Math.sin(animal.angle) * animal.speed;
+    const speed = animal.speed * settings.herbivore.speedMultiplier;
+    animal.x += Math.cos(animal.angle) * speed * dt;
+    animal.y += Math.sin(animal.angle) * speed * dt;
 
     if (animal.x < 0 || animal.x > canvas.width) {
       animal.angle = Math.PI - animal.angle;
@@ -156,11 +179,12 @@ function update() {
     animal.x = Math.max(0, Math.min(canvas.width, animal.x));
     animal.y = Math.max(0, Math.min(canvas.height, animal.y));
 
-    animal.health -= 0.1;
+    animal.health -= HEALTH_LOSS_PER_SECOND * settings.herbivore.energyUseMultiplier * dt;
     eatNearbyGrass(animal);
 
     if (animal.reproductionCooldown > 0) {
-      animal.reproductionCooldown--;
+      animal.reproductionCooldown = Math.max(0, animal.reproductionCooldown - dt);
+      if (animal.reproductionCooldown < 1e-9) animal.reproductionCooldown = 0;
     }
   }
 
@@ -173,22 +197,22 @@ function update() {
     }
 
     if (
-      animal.health > 70 &&
+      animal.health > REPRODUCTION_HEALTH_THRESHOLD &&
       animal.reproductionCooldown <= 0 &&
-      Math.random() < 0.001
+      Math.random() < eventProbability(REPRODUCTION_RATE * settings.herbivore.reproductionMultiplier, dt)
     ) {
       animals.push({
         x: animal.x,
         y: animal.y,
-        speed: 1 + Math.random(),
+        speed: (1 + Math.random()) * BASE_UPDATES_PER_SECOND,
         angle: Math.random() * Math.PI * 2,
         health: 100,
         maxHealth: 100,
-        reproductionCooldown: 600
+        reproductionCooldown: REPRODUCTION_COOLDOWN_SECONDS
       });
 
-      animal.health -= 30;
-      animal.reproductionCooldown = 600;
+      animal.health -= REPRODUCTION_COST;
+      animal.reproductionCooldown = REPRODUCTION_COOLDOWN_SECONDS;
     }
   }
 
@@ -200,8 +224,9 @@ function update() {
       predator.angle += (Math.random() - 0.5) * 0.3;
     }
 
-    predator.x += Math.cos(predator.angle) * predator.speed;
-    predator.y += Math.sin(predator.angle) * predator.speed;
+    const speed = predator.speed * settings.predator.speedMultiplier;
+    predator.x += Math.cos(predator.angle) * speed * dt;
+    predator.y += Math.sin(predator.angle) * speed * dt;
 
     if (predator.x < 0 || predator.x > canvas.width) {
       predator.angle = Math.PI - predator.angle;
@@ -213,11 +238,12 @@ function update() {
     predator.x = Math.max(0, Math.min(canvas.width, predator.x));
     predator.y = Math.max(0, Math.min(canvas.height, predator.y));
 
-    predator.health -= 0.1;
+    predator.health -= HEALTH_LOSS_PER_SECOND * settings.predator.energyUseMultiplier * dt;
     eatNearbyAnimal(predator);
 
     if (predator.reproductionCooldown > 0) {
-      predator.reproductionCooldown--;
+      predator.reproductionCooldown = Math.max(0, predator.reproductionCooldown - dt);
+      if (predator.reproductionCooldown < 1e-9) predator.reproductionCooldown = 0;
     }
   }
 
@@ -230,22 +256,22 @@ function update() {
     }
 
     if (
-      predator.health > 70 &&
+      predator.health > REPRODUCTION_HEALTH_THRESHOLD &&
       predator.reproductionCooldown <= 0 &&
-      Math.random() < 0.001
+      Math.random() < eventProbability(REPRODUCTION_RATE * settings.predator.reproductionMultiplier, dt)
     ) {
       predators.push({
         x: predator.x,
         y: predator.y,
-        speed: (1 + Math.random()) * PREDATOR_SPEED_MULTIPLIER,
+        speed: (1 + Math.random()) * PREDATOR_SPEED_MULTIPLIER * BASE_UPDATES_PER_SECOND,
         angle: Math.random() * Math.PI * 2,
         health: 100,
         maxHealth: 100,
-        reproductionCooldown: 600
+        reproductionCooldown: REPRODUCTION_COOLDOWN_SECONDS
       });
 
-      predator.health -= 30;
-      predator.reproductionCooldown = 600;
+      predator.health -= REPRODUCTION_COST;
+      predator.reproductionCooldown = REPRODUCTION_COOLDOWN_SECONDS;
     }
   }
 }
@@ -313,11 +339,34 @@ function draw() {
   );
 }
 
-function loop() {
-  update();
-  draw();
+let lastTimestamp = null;
+let accumulatedTime = 0;
 
+// 非表示の間は進めず、戻った際にまとめて計算しない。
+document.addEventListener("visibilitychange", () => {
+  lastTimestamp = null;
+  accumulatedTime = 0;
+});
+
+function loop(timestamp) {
+  if (document.hidden) {
+    lastTimestamp = null;
+    accumulatedTime = 0;
+  } else {
+    if (lastTimestamp !== null) {
+      accumulatedTime += Math.min(
+        MAX_FRAME_SECONDS,
+        Math.max(0, (timestamp - lastTimestamp) / 1000)
+      );
+    }
+    lastTimestamp = timestamp;
+    while (accumulatedTime + 1e-9 >= FIXED_DT) {
+      update(FIXED_DT);
+      accumulatedTime = Math.max(0, accumulatedTime - FIXED_DT);
+    }
+    draw();
+  }
   requestAnimationFrame(loop);
 }
 
-loop();
+requestAnimationFrame(loop);
