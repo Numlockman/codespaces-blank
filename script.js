@@ -281,6 +281,7 @@ function update(dt = FIXED_DT) {
       predator.reproductionCooldown = REPRODUCTION_COOLDOWN_SECONDS;
     }
   }
+  updateComparison(dt);
 }
 
 function draw() {
@@ -417,3 +418,118 @@ if (resetSettingsButton) {
     if (status) status.textContent = "倍率・探索距離を初期値に戻しました。";
   });
 }
+
+// 比較グラフ：箱庭と同じ固定時間刻みで方程式を積分する。
+const lv = { alpha: 0.06, beta: 0.02, delta: 0.01, gamma: 0.12,
+  x: animals.length, y: predators.length, valid: true };
+const populationHistory = [];
+const MAX_HISTORY_POINTS = 601;
+let nextPopulationSample = simulationTime + 1;
+const graphCanvas = document.getElementById("population-graph");
+const graphContext = graphCanvas ? graphCanvas.getContext("2d") : null;
+
+function lvDerivative(x, y) {
+  return [lv.alpha*x-lv.beta*x*y, lv.delta*x*y-lv.gamma*y];
+}
+function stepEquation(dt) {
+  if (!lv.valid) return;
+  const x=lv.x, y=lv.y;
+  const a=lvDerivative(x,y);
+  const b=lvDerivative(x+a[0]*dt/2,y+a[1]*dt/2);
+  const c=lvDerivative(x+b[0]*dt/2,y+b[1]*dt/2);
+  const d=lvDerivative(x+c[0]*dt,y+c[1]*dt);
+  const nx=x+dt*(a[0]+2*b[0]+2*c[0]+d[0])/6;
+  const ny=y+dt*(a[1]+2*b[1]+2*c[1]+d[1])/6;
+  if (!Number.isFinite(nx) || !Number.isFinite(ny) || nx<0 || ny<0 || nx>1e7 || ny>1e7) {
+    lv.valid=false;
+    const status=document.getElementById("graph-status");
+    if(status) status.textContent="方程式の計算範囲を超えました。係数を小さくして比較し直してください。箱庭は継続します。";
+    return;
+  }
+  lv.x=nx;lv.y=ny;
+}
+function recordPopulation(time) {
+  populationHistory.push({time, herbivore:animals.length, predator:predators.length,
+    theoryHerbivore:lv.valid?lv.x:null, theoryPredator:lv.valid?lv.y:null});
+  if(populationHistory.length>MAX_HISTORY_POINTS) populationHistory.shift();
+}
+function updateComparison(dt) {
+  stepEquation(dt);
+  if(simulationTime+1e-9>=nextPopulationSample) {
+    recordPopulation(nextPopulationSample);
+    nextPopulationSample+=1;
+    drawPopulationGraph();
+  }
+}
+function drawPopulationGraph() {
+  if(!graphContext || !populationHistory.length) return;
+  const box=graphCanvas.parentElement.getBoundingClientRect();
+  const w=Math.max(240,Math.floor(box.width)),h=Math.max(120,Math.floor(box.height));
+  const ratio=Math.min(window.devicePixelRatio||1,2);
+  graphCanvas.width=Math.round(w*ratio);graphCanvas.height=Math.round(h*ratio);
+  const g=graphContext;g.setTransform(ratio,0,0,ratio,0,0);
+  const left=52,right=w-16,top=22,bottom=h-32;
+  const first=populationHistory[0].time,last=populationHistory[populationHistory.length-1].time;
+  const end=Math.max(first+10,last);
+  let peak=1;
+  for(const row of populationHistory) for(const key of ["herbivore","predator","theoryHerbivore","theoryPredator"]) {
+    if(row[key]!==null) peak=Math.max(peak,row[key]);
+  }
+  const ceiling=Math.max(5,Math.ceil(peak*1.1));
+  const px=t=>left+(t-first)/(end-first)*(right-left);
+  const py=n=>bottom-n/ceiling*(bottom-top);
+  g.font="12px system-ui";g.fillStyle="#502034";g.fillText("個体数",4,14);
+  g.lineWidth=1;g.strokeStyle="#d8c3cb";
+  for(let i=0;i<=2;i++){
+    const n=ceiling*i/2,y=py(n);g.beginPath();g.moveTo(left,y);g.lineTo(right,y);g.stroke();
+    g.textAlign="right";g.fillText(n.toFixed(n%1?1:0),left-6,y+4);
+  }
+  const ticks=w<450?2:4;
+  for(let i=0;i<=ticks;i++){
+    const t=first+(end-first)*i/ticks;
+    g.textAlign=i===0?"left":i===ticks?"right":"center";
+    g.fillText(t.toFixed(0),px(t),bottom+16);
+  }
+  g.textAlign="right";g.fillText("シミュレーション時間（秒）",right,h-2);
+  g.save();g.beginPath();g.rect(left,top,right-left,bottom-top);g.clip();
+  for(const [key,color,dashed] of [
+    ["herbivore","#145cc5",false],["predator","#c02b3a",false],
+    ["theoryHerbivore","#145cc5",true],["theoryPredator","#c02b3a",true]]) {
+    g.strokeStyle=color;g.fillStyle=color;g.lineWidth=2;g.setLineDash(dashed?[6,4]:[]);
+    g.beginPath();let started=false;
+    for(const row of populationHistory){
+      if(row[key]===null){started=false;continue;}
+      if(!started){g.moveTo(px(row.time),py(row[key]));started=true;}
+      else g.lineTo(px(row.time),py(row[key]));
+    }
+    g.stroke();
+    const row=populationHistory[populationHistory.length-1];
+    if(row[key]!==null){g.beginPath();g.arc(px(row.time),py(row[key]),2,0,2*Math.PI);g.fill();}
+  }
+  g.restore();g.setLineDash([]);
+  const timeLabel=document.getElementById("graph-time");
+  if(timeLabel)timeLabel.textContent=last.toFixed(0)+"秒 ／ 直近600秒";
+}
+const restartComparison=document.getElementById("restart-comparison");
+if(restartComparison)restartComparison.addEventListener("click",()=>{
+  const coefficients={};
+  for(const key of ["alpha","beta","delta","gamma"]){
+    const input=document.getElementById("lv-"+key);
+    const value=Number(input.value);
+    if(input.value.trim()==="" || !Number.isFinite(value) || value<0 || value>1){
+      document.getElementById("graph-status").textContent="係数は0〜1の数値を入力してください。";
+      return;
+    }
+    coefficients[key]=value;
+  }
+  Object.assign(lv,coefficients,{x:animals.length,y:predators.length,valid:true});
+  populationHistory.length=0;
+  recordPopulation(simulationTime);nextPopulationSample=simulationTime+1;
+  document.getElementById("graph-status").textContent="現在の個体数から比較を開始。係数は箱庭の倍率と独立です。";
+  drawPopulationGraph();
+});
+recordPopulation(simulationTime);
+if(graphCanvas && typeof ResizeObserver!=="undefined"){
+  new ResizeObserver(drawPopulationGraph).observe(graphCanvas.parentElement);
+}
+drawPopulationGraph();
