@@ -16,14 +16,17 @@ const GRASS_HEALTH_RECOVERY = 30;
 function spawnGrass(randomPosition = false) {
   if (grasses.length >= MAX_GRASS_COUNT) return;
 
-  // 最初の配置、または全滅後の再発生ではフィールド全体から選ぶ。
-  if (randomPosition || grasses.length === 0) {
+  // 最初の配置だけはフィールド全体から選ぶ。
+  if (randomPosition) {
     grasses.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height
     });
     return;
   }
+
+  // 草が全滅したら、新しい草は自然発生しない。
+  if (grasses.length === 0) return;
 
   // 既存の草を親として、その周辺に新しい草を生やす。
   const parent = grasses[Math.floor(Math.random() * grasses.length)];
