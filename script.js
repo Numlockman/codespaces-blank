@@ -370,3 +370,39 @@ function loop(timestamp) {
 }
 
 requestAnimationFrame(loop);
+
+// 操作盤から設定だけを更新し、個体固有の基準速度は変更しない。
+const settingInputs = document.querySelectorAll("input[data-species][data-setting]");
+function refreshSettingInput(input) {
+  const value = settings[input.dataset.species][input.dataset.setting];
+  input.value = value;
+  const distance = input.dataset.setting === "detectionDistance";
+  const text = distance ? value + "px" : value.toFixed(1) + "倍";
+  const output = document.getElementById(input.id + "-value");
+  if (output) output.textContent = text;
+  input.setAttribute("aria-valuetext", text);
+}
+for (const input of settingInputs) {
+  refreshSettingInput(input);
+  input.addEventListener("input", () => {
+    const value = Number(input.value);
+    if (!Number.isFinite(value)) return;
+    settings[input.dataset.species][input.dataset.setting] =
+      Math.max(Number(input.min), Math.min(Number(input.max), value));
+    refreshSettingInput(input);
+  });
+}
+const resetSettingsButton = document.getElementById("reset-settings");
+if (resetSettingsButton) {
+  resetSettingsButton.addEventListener("click", () => {
+    for (const species of ["herbivore", "predator"]) {
+      settings[species].speedMultiplier = 1;
+      settings[species].reproductionMultiplier = 1;
+      settings[species].energyUseMultiplier = 1;
+    }
+    settings.predator.detectionDistance = 120;
+    for (const input of settingInputs) refreshSettingInput(input);
+    const status = document.getElementById("settings-status");
+    if (status) status.textContent = "倍率・探索距離を初期値に戻しました。";
+  });
+}
