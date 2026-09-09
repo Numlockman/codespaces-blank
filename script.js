@@ -603,3 +603,25 @@ for (const button of speedButtons) {
     }
   });
 }
+
+function resetAll() {
+  for (const species of ["herbivore", "predator"]) {
+    Object.assign(settings[species], DEFAULT_SETTINGS[species]);
+  }
+  for (const input of settingInputs) refreshSettingInput(input);
+  const coefficients = { alpha: 0.06, beta: 0.02, delta: 0.01, gamma: 0.12 };
+  Object.assign(lv, coefficients);
+  for (const [key, value] of Object.entries(coefficients)) {
+    const input = document.getElementById("lv-" + key);
+    if (input) input.value = value;
+  }
+  simulationSpeed = 1;
+  for (const button of speedButtons) {
+    button.setAttribute("aria-pressed", String(Number(button.dataset.simulationSpeed) === 1));
+  }
+  restartSimulation();
+  const status = document.getElementById("settings-status");
+  if (status) status.textContent = "全リセットしました（速度×1）。";
+}
+const resetAllButton = document.getElementById("reset-all");
+if (resetAllButton) resetAllButton.addEventListener("click", resetAll);
