@@ -10,7 +10,7 @@ window.addEventListener("error", (event) => {
 
 // 操作盤はこの倍率を変更する。1が現在の能力（捕食者の基本速度は1.5倍）。
 const settings = {
-  herbivore: { speedMultiplier: 1, reproductionMultiplier: 1, energyUseMultiplier: 1 },
+  herbivore: { speedMultiplier: 1, reproductionMultiplier: 1, energyUseMultiplier: 1, detectionDistance: 120 },
   predator: { speedMultiplier: 1, reproductionMultiplier: 1, energyUseMultiplier: 1, detectionDistance: 120 }
 };
 
@@ -74,6 +74,24 @@ function spawnGrass(randomPosition = false) {
 
 for (let i = 0; i < INITIAL_GRASS_COUNT; i++) {
   spawnGrass(true);
+}
+
+// 空腹の草食動物が探索範囲内の最も近い草を選ぶ。
+// 毎更新で現在の草配列を調べるため、食べられた草を追い続けない。
+function findNearbyGrass(animal) {
+  if (animal.health <= 0 || animal.health > EAT_HEALTH_THRESHOLD) return null;
+  let nearest = null;
+  let nearestSquared = settings.herbivore.detectionDistance ** 2;
+  for (const grass of grasses) {
+    const dx = grass.x - animal.x;
+    const dy = grass.y - animal.y;
+    const squared = dx * dx + dy * dy;
+    if (squared <= nearestSquared) {
+      nearest = grass;
+      nearestSquared = squared;
+    }
+  }
+  return nearest;
 }
 
 // 空腹で近くにあるときだけ食べる。1フレームにつき1株まで。
@@ -169,7 +187,12 @@ function update(dt = FIXED_DT) {
   }
 
   for (const animal of animals) {
-    animal.angle += (Math.random() - 0.5) * 0.3;
+    const grass = findNearbyGrass(animal);
+    if (grass) {
+      animal.angle = Math.atan2(grass.y - animal.y, grass.x - animal.x);
+    } else {
+      animal.angle += (Math.random() - 0.5) * 0.3;
+    }
 
     const speed = animal.speed * settings.herbivore.speedMultiplier;
     animal.x += Math.cos(animal.angle) * speed * dt;
@@ -413,6 +436,7 @@ if (resetSettingsButton) {
       settings[species].energyUseMultiplier = 1;
     }
     settings.predator.detectionDistance = 120;
+    settings.herbivore.detectionDistance = 120;
     for (const input of settingInputs) refreshSettingInput(input);
     const status = document.getElementById("settings-status");
     if (status) status.textContent = "倍率・探索距離を初期値に戻しました。";
