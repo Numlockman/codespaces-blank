@@ -190,7 +190,6 @@ for (let i = 0; i < INITIAL_PREDATOR_COUNT; i++) {
 
 
 }
-initializePopulations();
 
 // dtは固定の1/60秒。ランダムな方向変更もこの間隔で行う。
 function update(dt = FIXED_DT) {
@@ -414,11 +413,6 @@ function loop(timestamp) {
   requestAnimationFrame(loop);
 }
 
-draw();
-if (simulationStatus) {
-  simulationStatus.textContent = "実行中";
-}
-requestAnimationFrame(loop);
 
 // 操作盤から設定だけを更新し、個体固有の基準速度は変更しない。
 const settingInputs = document.querySelectorAll("input[data-species][data-setting]");
@@ -563,13 +557,6 @@ if(restartComparison)restartComparison.addEventListener("click",()=>{
   document.getElementById("graph-status").textContent="現在の個体数から比較を開始。係数は箱庭の倍率と独立です。";
   drawPopulationGraph();
 });
-recordPopulation(simulationTime);
-if(graphCanvas && typeof ResizeObserver!=="undefined"){
-  new ResizeObserver(drawPopulationGraph).observe(graphCanvas.parentElement);
-} else {
-  window.addEventListener("resize", drawPopulationGraph);
-}
-drawPopulationGraph();
 
 function restartSimulation() {
   initializePopulations();
@@ -628,3 +615,13 @@ function resetAll() {
 }
 const resetAllButton = document.getElementById("reset-all");
 if (resetAllButton) resetAllButton.addEventListener("click", resetAll);
+
+// 全状態・操作盤の初期化後にだけ、初期配置・描画・ループを開始する。
+restartSimulation();
+if(graphCanvas && typeof ResizeObserver!=="undefined"){
+  new ResizeObserver(drawPopulationGraph).observe(graphCanvas.parentElement);
+} else {
+  window.addEventListener("resize", drawPopulationGraph);
+}
+
+requestAnimationFrame(loop);
