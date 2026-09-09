@@ -8,21 +8,36 @@ const grasses = [];
 const INITIAL_GRASS_COUNT = 40;
 const MAX_GRASS_COUNT = 200;
 const GRASS_SPAWN_CHANCE = 0.08; // 1フレームごとの発生確率
+const GRASS_SPREAD = 30; // 親の草からX・Y方向へ広がる最大距離
 const EAT_HEALTH_THRESHOLD = 70;
 const EAT_DISTANCE = 12;
 const GRASS_HEALTH_RECOVERY = 30;
 
-function spawnGrass() {
+function spawnGrass(randomPosition = false) {
   if (grasses.length >= MAX_GRASS_COUNT) return;
 
+  // 最初の配置、または全滅後の再発生ではフィールド全体から選ぶ。
+  if (randomPosition || grasses.length === 0) {
+    grasses.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height
+    });
+    return;
+  }
+
+  // 既存の草を親として、その周辺に新しい草を生やす。
+  const parent = grasses[Math.floor(Math.random() * grasses.length)];
+  const x = parent.x + (Math.random() * 2 - 1) * GRASS_SPREAD;
+  const y = parent.y + (Math.random() * 2 - 1) * GRASS_SPREAD;
+
   grasses.push({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height
+    x: Math.max(0, Math.min(canvas.width, x)),
+    y: Math.max(0, Math.min(canvas.height, y))
   });
 }
 
 for (let i = 0; i < INITIAL_GRASS_COUNT; i++) {
-  spawnGrass();
+  spawnGrass(true);
 }
 
 // 空腹で近くにあるときだけ食べる。1フレームにつき1株まで。
