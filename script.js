@@ -2,6 +2,49 @@ const canvas = document.getElementById("field");
 const ctx = canvas.getContext("2d");
 
 const animals = [];
+const grasses = [];
+
+// 草・食事の設定（距離の単位は canvas 上のピクセル）
+const INITIAL_GRASS_COUNT = 40;
+const MAX_GRASS_COUNT = 200;
+const GRASS_SPAWN_CHANCE = 0.08; // 1フレームごとの発生確率
+const EAT_HEALTH_THRESHOLD = 70;
+const EAT_DISTANCE = 12;
+const GRASS_HEALTH_RECOVERY = 30;
+
+function spawnGrass() {
+  if (grasses.length >= MAX_GRASS_COUNT) return;
+
+  grasses.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height
+  });
+}
+
+for (let i = 0; i < INITIAL_GRASS_COUNT; i++) {
+  spawnGrass();
+}
+
+// 空腹で近くにあるときだけ食べる。1フレームにつき1株まで。
+function eatNearbyGrass(animal) {
+  if (animal.health <= 0 || animal.health > EAT_HEALTH_THRESHOLD) return;
+
+  for (let i = 0; i < grasses.length; i++) {
+    const distance = Math.hypot(
+      animal.x - grasses[i].x,
+      animal.y - grasses[i].y
+    );
+
+    if (distance <= EAT_DISTANCE) {
+      animal.health = Math.min(
+        animal.maxHealth,
+        animal.health + GRASS_HEALTH_RECOVERY
+      );
+      grasses.splice(i, 1);
+      return;
+    }
+  }
+}
 
 for (let i = 0; i < 10; i++) {
   animals.push({
@@ -16,6 +59,10 @@ for (let i = 0; i < 10; i++) {
 }
 
 function update() {
+  if (Math.random() < GRASS_SPAWN_CHANCE) {
+    spawnGrass();
+  }
+
   for (const animal of animals) {
     animal.angle += (Math.random() - 0.5) * 0.3;
 
@@ -34,6 +81,7 @@ function update() {
     animal.y = Math.max(0, Math.min(canvas.height, animal.y));
 
     animal.health -= 0.05;
+    eatNearbyGrass(animal);
 
     if (animal.reproductionCooldown > 0) {
       animal.reproductionCooldown--;
@@ -72,6 +120,14 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // 草を先に描き、その上に動物を描く。
+  ctx.fillStyle = "#65c74a";
+  for (const grass of grasses) {
+    ctx.beginPath();
+    ctx.arc(grass.x, grass.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   for (const animal of animals) {
     ctx.beginPath();
     ctx.arc(animal.x, animal.y, 6, 0, Math.PI * 2);
@@ -89,7 +145,7 @@ function draw() {
 
   ctx.fillStyle = "white";
   ctx.font = "16px sans-serif";
-  ctx.fillText(`個体数: ${animals.length}`, 10, 22);
+  ctx.fillText(`個体数: ${animals.length}  草: ${grasses.length}`, 10, 22);
 }
 
 function loop() {
