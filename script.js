@@ -14,9 +14,10 @@ const EAT_HEALTH_THRESHOLD = 70;
 const EAT_DISTANCE = 12;
 const GRASS_HEALTH_RECOVERY = 30;
 
-// 捕食者は食べ物だけを草食動物に変え、ほかの条件は同じにする。
+// 捕食者は草食動物を食べ、空腹時に近くの獲物を追う。
 const INITIAL_PREDATOR_COUNT = 2;
 const PREDATOR_SPEED_MULTIPLIER = 1.5;
+const PREDATOR_DETECTION_DISTANCE = 120; // 獲物を発見する半径（px）
 
 function spawnGrass(randomPosition = false) {
   if (grasses.length >= MAX_GRASS_COUNT) return;
@@ -67,6 +68,25 @@ function eatNearbyGrass(animal) {
       return;
     }
   }
+}
+
+// 平方根や配列の作成を避け、範囲内で最も近い生きた獲物を探す。
+function findNearbyPrey(predator) {
+  if (predator.health <= 0 || predator.health > EAT_HEALTH_THRESHOLD) return null;
+
+  let target = null;
+  let nearestDistanceSquared = PREDATOR_DETECTION_DISTANCE ** 2;
+  for (const animal of animals) {
+    if (animal.health <= 0) continue;
+    const dx = animal.x - predator.x;
+    const dy = animal.y - predator.y;
+    const distanceSquared = dx * dx + dy * dy;
+    if (distanceSquared <= nearestDistanceSquared) {
+      target = animal;
+      nearestDistanceSquared = distanceSquared;
+    }
+  }
+  return target;
 }
 
 // 空腹の捕食者が近くの草食動物を1匹だけ食べる。
@@ -173,7 +193,12 @@ function update() {
   }
 
   for (const predator of predators) {
-    predator.angle += (Math.random() - 0.5) * 0.3;
+    const prey = findNearbyPrey(predator);
+    if (prey) {
+      predator.angle = Math.atan2(prey.y - predator.y, prey.x - predator.x);
+    } else {
+      predator.angle += (Math.random() - 0.5) * 0.3;
+    }
 
     predator.x += Math.cos(predator.angle) * predator.speed;
     predator.y += Math.sin(predator.angle) * predator.speed;
