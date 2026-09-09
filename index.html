@@ -11,7 +11,7 @@ main { max-width: 1280px; margin: auto; padding: 20px; }
 h1 { font-size: 1.4rem; margin: 0 0 16px; }
 h2 { font-size: 1.1rem; margin: 0 0 12px; }
 .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
-.field-panel { min-width: 0; }
+.field-panel { min-width: 0; }\n.simulation-status { margin: 0 0 8px; font-weight: 700; }
 #field { display: block; width: 100%; height: auto; background: #3afa2c; }
 .legend { margin: 8px 0 0; font-size: .875rem; }
 .controls { background: #edf5ff; color: #172b43; padding: 18px; border-radius: 8px; min-width: 0; }
@@ -33,6 +33,7 @@ input:focus-visible, button:focus-visible { outline: 3px solid #245ba5; outline-
 <h1>ロトカロトロト</h1>
 <div class="workspace">
 <section class="field-panel" aria-label="箱庭">
+<p id="simulation-status" class="simulation-status" role="status">シミュレーションを読み込み中…</p>
 <canvas id="field" width="800" height="600" role="img" aria-label="草食動物と捕食者のシミュレーション">草食動物と捕食者のシミュレーション</canvas>
 <p class="legend">白い丸：草食動物 ／ 赤い丸：捕食者 ／ 緑の葉：草</p>
 </section>
