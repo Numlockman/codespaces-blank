@@ -9,9 +9,14 @@ window.addEventListener("error", (event) => {
 });
 
 // 操作盤はこの倍率を変更する。1が現在の能力（捕食者の基本速度は1.5倍）。
+// 複数の5分試行で共存を確認した初期値。永久的な共存を保証するものではない。
+const DEFAULT_SETTINGS = {
+  herbivore: { speedMultiplier: 1, reproductionMultiplier: 0.1, energyUseMultiplier: 0.25, detectionDistance: 200 },
+  predator: { speedMultiplier: 1, reproductionMultiplier: 0.05, energyUseMultiplier: 0.2, detectionDistance: 80 }
+};
 const settings = {
-  herbivore: { speedMultiplier: 1, reproductionMultiplier: 1, energyUseMultiplier: 1, detectionDistance: 120 },
-  predator: { speedMultiplier: 1, reproductionMultiplier: 1, energyUseMultiplier: 1, detectionDistance: 120 }
+  herbivore: { ...DEFAULT_SETTINGS.herbivore },
+  predator: { ...DEFAULT_SETTINGS.predator }
 };
 
 // 旧コードの60更新/秒を基準に、時間を秒・速度をpx/秒へ換算。
@@ -34,7 +39,8 @@ const predators = [];
 const grasses = [];
 
 // 草・食事の設定（距離の単位は canvas 上のピクセル）
-const INITIAL_GRASS_COUNT = 40;
+const INITIAL_GRASS_COUNT = 120;
+const INITIAL_HERBIVORE_COUNT = 40;
 const MAX_GRASS_COUNT = 200;
 const GRASS_SPAWN_RATE = -Math.log1p(-0.08) * BASE_UPDATES_PER_SECOND;
 const GRASS_SPREAD = 30; // 親の草からX・Y方向へ広がる最大距離
@@ -72,9 +78,7 @@ function spawnGrass(randomPosition = false) {
   });
 }
 
-for (let i = 0; i < INITIAL_GRASS_COUNT; i++) {
-  spawnGrass(true);
-}
+
 
 // 空腹の草食動物が探索範囲内の最も近い草を選ぶ。
 // 毎更新で現在の草配列を調べるため、食べられた草を追い続けない。
@@ -155,7 +159,12 @@ function eatNearbyAnimal(predator) {
   }
 }
 
-for (let i = 0; i < 10; i++) {
+function initializePopulations() {
+  animals.length = 0;
+  predators.length = 0;
+  grasses.length = 0;
+  for (let i = 0; i < INITIAL_GRASS_COUNT; i++) spawnGrass(true);
+for (let i = 0; i < INITIAL_HERBIVORE_COUNT; i++) {
   animals.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
@@ -178,6 +187,10 @@ for (let i = 0; i < INITIAL_PREDATOR_COUNT; i++) {
     reproductionCooldown: 0
   });
 }
+
+
+}
+initializePopulations();
 
 // dtは固定の1/60秒。ランダムな方向変更もこの間隔で行う。
 function update(dt = FIXED_DT) {
@@ -412,7 +425,7 @@ function refreshSettingInput(input) {
   const value = settings[input.dataset.species][input.dataset.setting];
   input.value = value;
   const distance = input.dataset.setting === "detectionDistance";
-  const text = distance ? value + "px" : value.toFixed(1) + "倍";
+  const text = distance ? value + "px" : value.toFixed(2) + "倍";
   const output = document.getElementById(input.id + "-value");
   if (output) output.textContent = text;
   input.setAttribute("aria-valuetext", text);
@@ -431,12 +444,8 @@ const resetSettingsButton = document.getElementById("reset-settings");
 if (resetSettingsButton) {
   resetSettingsButton.addEventListener("click", () => {
     for (const species of ["herbivore", "predator"]) {
-      settings[species].speedMultiplier = 1;
-      settings[species].reproductionMultiplier = 1;
-      settings[species].energyUseMultiplier = 1;
+      Object.assign(settings[species], DEFAULT_SETTINGS[species]);
     }
-    settings.predator.detectionDistance = 120;
-    settings.herbivore.detectionDistance = 120;
     for (const input of settingInputs) refreshSettingInput(input);
     const status = document.getElementById("settings-status");
     if (status) status.textContent = "倍率・探索距離を初期値に戻しました。";
@@ -557,3 +566,23 @@ if(graphCanvas && typeof ResizeObserver!=="undefined"){
   new ResizeObserver(drawPopulationGraph).observe(graphCanvas.parentElement);
 }
 drawPopulationGraph();
+
+function restartSimulation() {
+  initializePopulations();
+  simulationTime = 0;
+  lastTimestamp = null;
+  accumulatedTime = 0;
+  lv.x = animals.length;
+  lv.y = predators.length;
+  lv.valid = true;
+  populationHistory.length = 0;
+  nextPopulationSample = 1;
+  recordPopulation(0);
+  draw();
+  drawPopulationGraph();
+  if (simulationStatus) simulationStatus.textContent = "実行中";
+  const status = document.getElementById("graph-status");
+  if (status) status.textContent = "現在の設定で再スタート。方程式の係数は箱庭と独立です。";
+}
+const restartButton = document.getElementById("restart-simulation");
+if (restartButton) restartButton.addEventListener("click", restartSimulation);
