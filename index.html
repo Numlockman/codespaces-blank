@@ -1,33 +1,72 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ロトカロトロト</title>
-
-  <style>
-    body {
-      margin: 0;
-      background-color: #780d28;
-      color: white;
-      text-align: center;
-      font-family: sans-serif;
-    }
-
-    canvas {
-      background: #3afa2c;
-      max-width: 100%;
-      height: auto;
-      touch-action: none;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ロトカロトロト</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: #780d28; color: #fff; font-family: system-ui, sans-serif; font-size: 16px; line-height: 1.5; }
+main { max-width: 1280px; margin: auto; padding: 20px; }
+h1 { font-size: 1.4rem; margin: 0 0 16px; }
+h2 { font-size: 1.1rem; margin: 0 0 12px; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+.field-panel { min-width: 0; }
+#field { display: block; width: 100%; height: auto; background: #3afa2c; }
+.legend { margin: 8px 0 0; font-size: .875rem; }
+.controls { background: #edf5ff; color: #172b43; padding: 18px; border-radius: 8px; min-width: 0; }
+fieldset { border: 0; padding: 0; margin: 0 0 18px; min-width: 0; }
+legend { font-weight: 700; padding: 0; margin-bottom: 8px; }
+label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: .875rem; }
+output { font-variant-numeric: tabular-nums; }
+input[type="range"] { display: block; width: 100%; height: 28px; margin: 0 0 6px; accent-color: #245ba5; cursor: pointer; }
+button { font: inherit; padding: 9px 14px; min-height: 44px; border: 1px solid #547293; border-radius: 5px; color: #172b43; background: white; cursor: pointer; }
+input:focus-visible, button:focus-visible { outline: 3px solid #245ba5; outline-offset: 3px; }
+.note { font-size: .875rem; margin: 10px 0 0; }
+.graph-panel { margin-top: 20px; padding: 18px; background: #fff0f4; color: #502034; border-radius: 8px; min-height: 180px; }
+.graph-panel p { margin: 0; }
+@media (max-width: 760px) { main { padding: 12px; } .workspace { grid-template-columns: minmax(0, 1fr); } input[type="range"] { height: 44px; } }
+</style>
 </head>
-
 <body>
-  <h2>ロトカロトカ</h2>
+<main>
+<h1>ロトカロトロト</h1>
+<div class="workspace">
+<section class="field-panel" aria-label="箱庭">
+<canvas id="field" width="800" height="600" role="img" aria-label="草食動物と捕食者のシミュレーション">草食動物と捕食者のシミュレーション</canvas>
+<p class="legend">白い丸：草食動物 ／ 赤い丸：捕食者 ／ 緑の葉：草</p>
+</section>
+<aside class="controls" aria-labelledby="controls-title">
+<h2 id="controls-title">操作盤</h2>
+<fieldset><legend>草食動物</legend>
+<label for="herbivore-speedMultiplier">移動速度<output id="herbivore-speedMultiplier-value" for="herbivore-speedMultiplier">1.0倍</output></label>
+<input id="herbivore-speedMultiplier" data-species="herbivore" data-setting="speedMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="herbivore-speedMultiplier-value">
+<label for="herbivore-reproductionMultiplier">繁殖倍率<output id="herbivore-reproductionMultiplier-value" for="herbivore-reproductionMultiplier">1.0倍</output></label>
+<input id="herbivore-reproductionMultiplier" data-species="herbivore" data-setting="reproductionMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="herbivore-reproductionMultiplier-value">
+<label for="herbivore-energyUseMultiplier">体力消費<output id="herbivore-energyUseMultiplier-value" for="herbivore-energyUseMultiplier">1.0倍</output></label>
+<input id="herbivore-energyUseMultiplier" data-species="herbivore" data-setting="energyUseMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="herbivore-energyUseMultiplier-value">
+</fieldset>
+<fieldset><legend>捕食者</legend>
+<label for="predator-speedMultiplier">移動速度<output id="predator-speedMultiplier-value" for="predator-speedMultiplier">1.0倍</output></label>
+<input id="predator-speedMultiplier" data-species="predator" data-setting="speedMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="predator-speedMultiplier-value">
+<label for="predator-reproductionMultiplier">繁殖倍率<output id="predator-reproductionMultiplier-value" for="predator-reproductionMultiplier">1.0倍</output></label>
+<input id="predator-reproductionMultiplier" data-species="predator" data-setting="reproductionMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="predator-reproductionMultiplier-value">
+<label for="predator-energyUseMultiplier">体力消費<output id="predator-energyUseMultiplier-value" for="predator-energyUseMultiplier">1.0倍</output></label>
+<input id="predator-energyUseMultiplier" data-species="predator" data-setting="energyUseMultiplier" type="range" min="0" max="3" step="0.1" value="1" aria-describedby="predator-energyUseMultiplier-value">
+<label for="predator-detectionDistance">探索距離<output id="predator-detectionDistance-value" for="predator-detectionDistance">120px</output></label>
+<input id="predator-detectionDistance" data-species="predator" data-setting="detectionDistance" type="range" min="0" max="400" step="10" value="120" aria-describedby="predator-detectionDistance-value">
+</fieldset>
 
-  <canvas id="field" width="800" height="600"></canvas>
-
-  <script src="script.js"></script>
+<button type="button" id="reset-settings">倍率・探索距離を初期値に戻す</button>
+<p class="note">変更は現在の個体にも即時反映されます。1倍は各種の基準値です。捕食者の基本速度は草食動物の1.5倍です。</p>
+<p id="settings-status" class="note" role="status"></p>
+</aside>
+</div>
+<section class="graph-panel" aria-labelledby="graph-title">
+<h2 id="graph-title">個体数グラフ</h2>
+<p>次の段階で、箱庭の個体数と方程式の比較グラフをここに表示します。</p>
+</section>
+</main>
+<script src="script.js"></script>
 </body>
+</html>
