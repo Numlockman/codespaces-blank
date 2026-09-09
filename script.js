@@ -42,8 +42,8 @@ const grasses = [];
 const INITIAL_GRASS_COUNT = 120;
 const INITIAL_HERBIVORE_COUNT = 40;
 const MAX_GRASS_COUNT = 200;
-const GRASS_SPAWN_RATE = -Math.log1p(-0.08) * BASE_UPDATES_PER_SECOND;
-const GRASS_SPREAD = 30; // 親の草からX・Y方向へ広がる最大距離
+// 1/60秒ごとの発生確率を8%から4%へ半減（上限未満なら平均2.4株/秒）。
+const GRASS_SPAWN_RATE = -Math.log1p(-0.04) * BASE_UPDATES_PER_SECOND;
 const EAT_HEALTH_THRESHOLD = 70;
 const EAT_DISTANCE = 12;
 const GRASS_HEALTH_RECOVERY = 30;
@@ -52,33 +52,17 @@ const GRASS_HEALTH_RECOVERY = 30;
 const INITIAL_PREDATOR_COUNT = 2;
 const PREDATOR_SPEED_MULTIPLIER = 1.5;
 
-function spawnGrass(randomPosition = false) {
+function spawnGrass(initialPlacement = false) {
   if (grasses.length >= MAX_GRASS_COUNT) return;
+  // 初期配置・リセット以外では、全滅した草を復活させない。
+  if (!initialPlacement && grasses.length === 0) return;
 
-  // 最初の配置だけはフィールド全体から選ぶ。
-  if (randomPosition) {
-    grasses.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height
-    });
-    return;
-  }
-
-  // 草が全滅したら、新しい草は自然発生しない。
-  if (grasses.length === 0) return;
-
-  // 既存の草を親として、その周辺に新しい草を生やす。
-  const parent = grasses[Math.floor(Math.random() * grasses.length)];
-  const x = parent.x + (Math.random() * 2 - 1) * GRASS_SPREAD;
-  const y = parent.y + (Math.random() * 2 - 1) * GRASS_SPREAD;
-
+  // 既存の草の位置によらず、フィールド全体から均等に選ぶ。
   grasses.push({
-    x: Math.max(0, Math.min(canvas.width, x)),
-    y: Math.max(0, Math.min(canvas.height, y))
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height
   });
 }
-
-
 
 // 空腹の草食動物が探索範囲内の最も近い草を選ぶ。
 // 毎更新で現在の草配列を調べるため、食べられた草を追い続けない。
