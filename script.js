@@ -304,7 +304,8 @@ function update(dt = FIXED_DT) {
 }
 
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#3afa2c";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // 草を先に描き、その上に動物を描く。
   // 明るい緑のフィールドでも見えるよう、濃い緑の3本の葉で表す。
@@ -477,7 +478,7 @@ function updateComparison(dt) {
 function drawPopulationGraph() {
   if(!graphContext || !populationHistory.length) return;
   const box=graphCanvas.parentElement.getBoundingClientRect();
-  const w=Math.max(240,Math.floor(box.width)),h=Math.max(120,Math.floor(box.height));
+  const w=Math.max(160,Math.floor(box.width)),h=Math.max(80,Math.floor(box.height));
   const ratio=Math.min(window.devicePixelRatio||1,2);
   graphCanvas.width=Math.round(w*ratio);graphCanvas.height=Math.round(h*ratio);
   const g=graphContext;g.setTransform(ratio,0,0,ratio,0,0);
