@@ -454,7 +454,8 @@ if (resetSettingsButton) {
 }
 
 // 比較グラフ：箱庭と同じ固定時間刻みで方程式を積分する。
-const lv = { alpha: 0.06, beta: 0.02, delta: 0.01, gamma: 0.12,
+const DEFAULT_LV_COEFFICIENTS = { alpha: 0.06, beta: 0.02, delta: 0.01, gamma: 0.12 };
+const lv = { ...DEFAULT_LV_COEFFICIENTS,
   x: animals.length, y: predators.length, valid: true };
 const populationHistory = [];
 const MAX_HISTORY_POINTS = 601;
@@ -565,6 +566,8 @@ if(restartComparison)restartComparison.addEventListener("click",()=>{
 recordPopulation(simulationTime);
 if(graphCanvas && typeof ResizeObserver!=="undefined"){
   new ResizeObserver(drawPopulationGraph).observe(graphCanvas.parentElement);
+} else {
+  window.addEventListener("resize", drawPopulationGraph);
 }
 drawPopulationGraph();
 
@@ -609,7 +612,7 @@ function resetAll() {
     Object.assign(settings[species], DEFAULT_SETTINGS[species]);
   }
   for (const input of settingInputs) refreshSettingInput(input);
-  const coefficients = { alpha: 0.06, beta: 0.02, delta: 0.01, gamma: 0.12 };
+  const coefficients = DEFAULT_LV_COEFFICIENTS;
   Object.assign(lv, coefficients);
   for (const [key, value] of Object.entries(coefficients)) {
     const input = document.getElementById("lv-" + key);
