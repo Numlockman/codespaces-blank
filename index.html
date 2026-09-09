@@ -69,11 +69,14 @@ input[type="range"] { margin: 0 0 3px; height: 26px; }
 .page-header h1 { margin: 0; }
 .page-header span { font-size: .875rem; }
 #restart-simulation { min-height: 32px; padding: 4px 12px; font-size: .875rem; }
+.speed-controls { display: flex; align-items: center; gap: 5px; }
+.speed-controls button { min-height: 32px; padding: 4px 10px; font-size: .875rem; }
+.speed-controls button[aria-pressed="true"] { background: #193f72; color: white; border-color: #d5e7ff; }
 </style>
 </head>
 <body>
 <main>
-<header class="page-header"><h1>ロトカロトロト</h1><button type="button" id="restart-simulation">リスタート</button><span>現在の設定を保って最初から</span></header>
+<header class="page-header"><h1>ロトカロトロト</h1><button type="button" id="restart-simulation">リスタート</button><span>現在の設定を保って最初から</span><div class="speed-controls" role="group" aria-label="シミュレーション速度"><span>速度</span><button type="button" data-simulation-speed="1" aria-pressed="true">×1</button><button type="button" data-simulation-speed="3" aria-pressed="false">×3</button><button type="button" data-simulation-speed="5" aria-pressed="false">×5</button></div></header>
 <div class="workspace">
 <section class="field-panel" aria-label="箱庭">
 <p id="simulation-status" class="simulation-status" role="status">シミュレーションを読み込み中…</p>
