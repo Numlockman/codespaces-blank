@@ -51,6 +51,7 @@ const GRASS_HEALTH_RECOVERY = 30;
 // 捕食者は草食動物を食べ、空腹時に近くの獲物を追う。
 const INITIAL_PREDATOR_COUNT = 2;
 const PREDATOR_SPEED_MULTIPLIER = 1.5;
+const PREDATOR_HEALTH_RECOVERY = 50;
 
 function spawnGrass(initialPlacement = false) {
   if (grasses.length >= MAX_GRASS_COUNT) return;
@@ -135,7 +136,7 @@ function eatNearbyAnimal(predator) {
     if (distance <= EAT_DISTANCE) {
       predator.health = Math.min(
         predator.maxHealth,
-        predator.health + GRASS_HEALTH_RECOVERY
+        predator.health + PREDATOR_HEALTH_RECOVERY
       );
       animals.splice(i, 1);
       return;
